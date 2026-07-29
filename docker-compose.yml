@@ -1,0 +1,19 @@
+services:
+  ticker-alerts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticker-alerts
+    env_file:
+      - .env
+    ports:
+      # Local-only health endpoint. Not exposed publicly by Caddy.
+      - "127.0.0.1:8087:8080"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
