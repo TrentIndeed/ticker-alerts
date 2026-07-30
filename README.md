@@ -3,12 +3,15 @@
 Reads SEC filings straight from EDGAR and pushes dilution warnings to Telegram
 in seconds — including the offerings that never produce a headline at all.
 
-![Dilution alerts in Telegram](screenshots/telegram-alerts.png)
+<p align="center">
+  <img src="screenshots/alert-and-commands.jpeg" width="46%" alt="Dilution alert and commands in Telegram">
+  <img src="screenshots/watchlist-autodiscovery.jpeg" width="46%" alt="Watchlist showing auto-discovered movers">
+</p>
 
-<sub>Real filings, real classification. Captured during a **replay test** — the
-system was deliberately pointed at the day's earlier filings to verify
-detection, which is why the `(…s ago)` ages are large. In live operation these
-arrive within about a minute of the SEC accepting the filing.</sub>
+<sub><b>Left:</b> a dilution alert with the offering size and structure pulled
+out of the filing document, delivered <code>0s</code> after detection — plus the
+whole watchlist managed from the chat. <b>Right:</b> <code>/list</code> — your
+own tickers, and the 24 the scanner found moving that day on its own.</sub>
 
 ---
 
@@ -232,6 +235,17 @@ Then, a second or two later, once it has read the document:
 The first message is sent on form type alone so it goes out as fast as
 possible. Reading the actual document takes another second, so that becomes a
 follow-up rather than a delay.
+
+A batch of real filings, as delivered:
+
+<img src="screenshots/telegram-alerts.png" width="70%" alt="Real SEC filings delivered to Telegram">
+
+<sub>Captured during a detection test that replayed the day's earlier filings,
+which is why the `(…s ago)` ages are large — in live operation these arrive
+within about a minute of the SEC accepting the filing. Note `$DAIC`: that 8-K
+read as routine on form type, and only became a dilution warning after the
+document scan found a convertible security, a reverse split, and a securities
+purchase agreement.</sub>
 
 ### Alert levels
 
