@@ -22,6 +22,7 @@ from ..alerts import Alert, emit
 from ..classify import classify_headline
 from ..config import cfg
 from ..store import store
+from ..util import describe
 
 log = logging.getLogger(__name__)
 
@@ -134,7 +135,7 @@ async def run() -> None:
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # noqa: BLE001
-            store.mark_health(NAME, ok=False, err=f"{type(exc).__name__}: {exc}")
+            store.mark_health(NAME, ok=False, err=describe(exc))
             log.warning("Alpaca stream dropped (%s); reconnecting in %.0fs", exc, backoff)
             await asyncio.sleep(backoff)
             backoff = min(backoff * 2, 120)

@@ -24,7 +24,7 @@ from .sources import news_alpaca, news_rss
 from .sources import sec as sec_mod
 from .store import store
 from .tickers import backfill_ciks, index
-from .util import resilient_loop
+from .util import RedactingFormatter, resilient_loop
 
 log = logging.getLogger("ticker-alerts")
 
@@ -41,12 +41,9 @@ def setup_logging() -> None:
     except (AttributeError, OSError):
         pass
 
-    logging.basicConfig(
-        level=getattr(logging, cfg.log_level, logging.INFO),
-        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
-        datefmt="%H:%M:%S",
-        stream=sys.stdout,
-    )
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(RedactingFormatter("%(asctime)s %(levelname)-7s %(name)s: %(message)s", datefmt="%H:%M:%S"))
+    logging.basicConfig(level=getattr(logging, cfg.log_level, logging.INFO), handlers=[handler])
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("websockets").setLevel(logging.WARNING)

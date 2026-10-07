@@ -14,6 +14,7 @@ import threading
 import time
 
 from .config import cfg
+from .util import redact
 
 log = logging.getLogger(__name__)
 
@@ -74,6 +75,10 @@ class Store:
         self._db.execute("PRAGMA journal_mode=WAL")
         self._db.execute("PRAGMA synchronous=NORMAL")
         self._db.executescript(SCHEMA)
+        # Errors stored before redaction existed could hold the bot token: mask them once on start-up.
+        for source, err in list(self._db.execute("SELECT source, last_err FROM health WHERE last_err IS NOT NULL")):
+            if redact(err) != err:
+                self._db.execute("UPDATE health SET last_err=? WHERE source=?", (redact(err), source))
         self._db.commit()
 
     # ---------------- dedup ----------------
@@ -229,7 +234,7 @@ class Store:
                 self._db.execute(
                     "UPDATE health SET last_err=?, last_err_ts=?,"
                     " err_count=err_count+1 WHERE source=?",
-                    (err, now, source),
+                    (redact(err) if err else err, now, source),
                 )
             self._db.commit()
 

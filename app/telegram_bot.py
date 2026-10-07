@@ -16,7 +16,7 @@ import httpx
 
 from .config import cfg
 from .store import store
-from .util import ago, fmt_et, fmt_et_full, in_alert_window
+from .util import ago, describe, fmt_et, fmt_et_full, in_alert_window
 
 log = logging.getLogger(__name__)
 
@@ -377,7 +377,7 @@ async def poll_commands() -> None:
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # noqa: BLE001
-            store.mark_health("telegram", ok=False, err=f"{type(exc).__name__}: {exc}")
+            store.mark_health("telegram", ok=False, err=describe(exc))
             log.warning("getUpdates failed: %s (retry in %.0fs)", exc, backoff)
             await asyncio.sleep(backoff)
             backoff = min(backoff * 2, 60)
