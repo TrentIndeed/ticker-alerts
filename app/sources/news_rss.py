@@ -34,12 +34,10 @@ UA = (
 YAHOO = "https://feeds.finance.yahoo.com/rss/2.0/headline?s={t}&region=US&lang=en-US"
 GOOGLE_NEWS = "https://news.google.com/rss/search?q={q}&hl=en-US&gl=US&ceid=US:en"
 
+# GlobeNewswire was dropped on 2026-10-07: since mid-August its site refuses non-browser clients (HTTP/2
+# INTERNAL_ERROR or a hang, from the VPS and from a home connection alike; nothing arrived after Aug 10).
+# Its releases still reach a watched ticker through the per-ticker Yahoo feed.
 WIRES = [
-    (
-        "GlobeNewswire",
-        "https://www.globenewswire.com/RssFeed/orgclass/1/feedTitle/"
-        "GlobeNewswire%20-%20News%20about%20Public%20Companies",
-    ),
     ("Business Wire", "https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFpRVQ=="),
     ("PR Newswire", "https://www.prnewswire.com/rss/news-releases-list.rss"),
 ]
@@ -120,9 +118,16 @@ def _entry_id(entry, fallback: str) -> str:
 
 
 async def _fetch_feed(client: httpx.AsyncClient, url: str):
-    resp = await client.get(url, headers={"User-Agent": UA}, timeout=25)
-    resp.raise_for_status()
-    return feedparser.parse(resp.content)
+    for attempt in range(3):
+        resp = await client.get(url, headers={"User-Agent": UA}, timeout=25)
+        # PR Newswire's CDN now and then 301s the feed to the same path plus "/", which is a 404 (about one
+        # request in four, Oct 2026); the next request normally gets the feed, so ask again.
+        final = str(resp.url)
+        if resp.status_code == 404 and final != url and final.rstrip("/") == url.rstrip("/") and attempt < 2:
+            await asyncio.sleep(0.5 * (attempt + 1))
+            continue
+        resp.raise_for_status()
+        return feedparser.parse(resp.content)
 
 
 class TickerNewsWatcher:
